@@ -1,0 +1,12 @@
+[Libraries/]
+[Library/]
+[TMP/]
+[Temp/]
+[Obj/]
+[Bin/]
+*.csproj
+*.sln
+*.user
+*.userprefs
+*.pidb
+*.unityproj
