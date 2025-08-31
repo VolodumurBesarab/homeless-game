@@ -8,6 +8,7 @@ public class GridSpawner : MonoBehaviour
     [SerializeField] private TileBase pointTile;
     [SerializeField] private TileBase roadTile;
     [SerializeField] private TileBase playerTile;
+    [SerializeField] private TileBase grassTile;
 
     [Header("Map Size")]
     [SerializeField] private int width = 32;
@@ -41,6 +42,7 @@ public class GridSpawner : MonoBehaviour
         tilemap.ClearAllTiles();
         SpawnPoints();
         ConnectPoints();
+        FillGrass();
     }
 
     private void SpawnPoints()
@@ -157,6 +159,21 @@ public class GridSpawner : MonoBehaviour
             {
                 Debug.LogError("Не знайдено дорогу для спавну плеєра!");
                 return Vector3Int.zero;
+            }
+        }
+    }
+
+    private void FillGrass()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Vector3Int cell = new Vector3Int(x, y, 0);
+                if (tilemap.GetTile(cell) == null)
+                {
+                    tilemap.SetTile(cell, grassTile);
+                }
             }
         }
     }

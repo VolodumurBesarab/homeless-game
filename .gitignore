@@ -7,8 +7,7 @@ Bin/
 .vscode/
 Logs/
 UserSettings/
-Assets/Scenes/GameScene.unity.meta
-Assets/Scenes/MainMenu.unity.meta
+*.meta
 *.csproj
 *.sln
 *.user

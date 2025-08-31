@@ -7,12 +7,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Tilemap tilemap;
     [SerializeField] private TileBase roadTile;
     [SerializeField] private TileBase playerTile;
+    [SerializeField] private Camera mainCamera;
 
     private Vector3Int playerCell;
-
     private bool initialized = false;
 
-    // викликається GridSpawner після спавну плеєра
+    [Header("Camera Settings")]
+    [SerializeField] private float cameraSmoothTime = 0.1f; // швидкість плавності камери
+    private Vector3 cameraVelocity = Vector3.zero;
+
     public void OnPlayerSpawned(Vector3Int cell)
     {
         playerCell = cell;
@@ -34,14 +37,22 @@ public class PlayerController : MonoBehaviour
             TryMove(direction);
     }
 
+    private void LateUpdate()
+    {
+        if (!initialized || mainCamera == null) return;
+
+        Vector3 targetPos = tilemap.CellToWorld(playerCell) + new Vector3(0.5f, 0.5f, -10);
+        mainCamera.transform.position = Vector3.SmoothDamp(mainCamera.transform.position, targetPos, ref cameraVelocity, cameraSmoothTime);
+    }
+
     private void TryMove(Vector3Int direction)
     {
         Vector3Int nextCell = playerCell + direction;
 
         if (tilemap.GetTile(nextCell) == roadTile)
         {
-            tilemap.SetTile(playerCell, roadTile);   // стара клітинка стає дорогою
-            tilemap.SetTile(nextCell, playerTile);   // нова клітинка — гравець
+            tilemap.SetTile(playerCell, roadTile); // стара клітинка стає дорогою
+            tilemap.SetTile(nextCell, playerTile); // нова клітинка — гравець
             playerCell = nextCell;
         }
     }
