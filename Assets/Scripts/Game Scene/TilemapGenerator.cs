@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -10,11 +11,9 @@ public class GridSpawner : MonoBehaviour
     [SerializeField] private TileBase playerTile;
     [SerializeField] private TileBase grassTile;
 
-    [Header("Map Size")]
+    [Header("Chunk Settings")]
     [SerializeField] private int width = 32;
     [SerializeField] private int height = 32;
-
-    [Header("Subgrid Settings")]
     [SerializeField] private int subGridWidth = 8;
     [SerializeField] private int subGridHeight = 8;
 
@@ -25,31 +24,65 @@ public class GridSpawner : MonoBehaviour
     [Header("Player Controller")]
     [SerializeField] private PlayerController playerController; // drag & drop
 
-    private Vector3Int[,] points;
+    private Dictionary<Vector2Int, bool> spawnedChunks = new Dictionary<Vector2Int, bool>();
+    private Vector3Int playerCell;
 
     private void Start()
     {
-        GenerateChunk();
-        Vector3Int spawnCell = SpawnPlayerOnCenterRoad();
+        // Спавнимо гравця після першого чанку
+        Vector2Int initialChunk = Vector2Int.zero;
+        GenerateChunkAt(initialChunk);
 
-        // повідомляємо PlayerController де спавнити гравця
+        Vector3Int spawnCell = SpawnPlayerOnCenterRoad(initialChunk);
+        playerCell = spawnCell;
+
         if (playerController != null)
             playerController.OnPlayerSpawned(spawnCell);
     }
 
-    public void GenerateChunk()
+    private void Update()
     {
-        tilemap.ClearAllTiles();
-        SpawnPoints();
-        ConnectPoints();
-        FillGrass();
+        if (playerCell == Vector3Int.zero) return;
+
+        // Генеруємо сусідні чанки навколо гравця
+        Vector2Int playerChunk = GetPlayerChunk(playerCell);
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                Vector2Int chunkToSpawn = playerChunk + new Vector2Int(dx, dy);
+                GenerateChunkAt(chunkToSpawn);
+            }
+        }
     }
 
-    private void SpawnPoints()
+    private Vector2Int GetPlayerChunk(Vector3Int cell)
     {
-        int subCountX = width / subGridWidth;
-        int subCountY = height / subGridHeight;
-        points = new Vector3Int[subCountX, subCountY];
+        int chunkX = cell.x / width;
+        int chunkY = cell.y / height;
+        return new Vector2Int(chunkX, chunkY);
+    }
+
+    private void GenerateChunkAt(Vector2Int chunkPos)
+    {
+        if (spawnedChunks.ContainsKey(chunkPos)) return;
+
+        int offsetX = chunkPos.x * width;
+        int offsetY = chunkPos.y * height;
+
+        Vector3Int[,] points = new Vector3Int[width / subGridWidth, height / subGridHeight];
+        SpawnPoints(offsetX, offsetY, points);
+        ConnectPoints(offsetX, offsetY, points);
+        ConnectIsolatedPoints(points);
+        FillGrass(offsetX, offsetY);
+
+        spawnedChunks[chunkPos] = true;
+    }
+
+    private void SpawnPoints(int offsetX, int offsetY, Vector3Int[,] points)
+    {
+        int subCountX = points.GetLength(0);
+        int subCountY = points.GetLength(1);
 
         for (int y = 0; y < subCountY; y++)
         {
@@ -61,11 +94,8 @@ public class GridSpawner : MonoBehaviour
                     continue;
                 }
 
-                int startX = x * subGridWidth;
-                int startY = y * subGridHeight;
-
-                int randX = Random.Range(startX, startX + subGridWidth);
-                int randY = Random.Range(startY, startY + subGridHeight);
+                int randX = Random.Range(offsetX + x * subGridWidth, offsetX + (x + 1) * subGridWidth);
+                int randY = Random.Range(offsetY + y * subGridHeight, offsetY + (y + 1) * subGridHeight);
 
                 Vector3Int cellPos = new Vector3Int(randX, randY, 0);
                 tilemap.SetTile(cellPos, pointTile);
@@ -74,7 +104,7 @@ public class GridSpawner : MonoBehaviour
         }
     }
 
-    private void ConnectPoints()
+    private void ConnectPoints(int offsetX, int offsetY, Vector3Int[,] points)
     {
         int subCountX = points.GetLength(0);
         int subCountY = points.GetLength(1);
@@ -117,10 +147,8 @@ public class GridSpawner : MonoBehaviour
     {
         int x = start.x;
         int y = start.y;
-
         int dx = end.x - start.x;
         int dy = end.y - start.y;
-
         int stepX = dx == 0 ? 0 : (dx > 0 ? 1 : -1);
         int stepY = dy == 0 ? 0 : (dy > 0 ? 1 : -1);
 
@@ -135,9 +163,11 @@ public class GridSpawner : MonoBehaviour
         }
     }
 
-    public Vector3Int SpawnPlayerOnCenterRoad()
+    private Vector3Int SpawnPlayerOnCenterRoad(Vector2Int chunk)
     {
-        Vector3Int center = new Vector3Int(width / 2, height / 2, 0);
+        int offsetX = chunk.x * width;
+        int offsetY = chunk.y * height;
+        Vector3Int center = new Vector3Int(offsetX + width / 2, offsetY + height / 2, 0);
 
         int searchRadius = 1;
         while (true)
@@ -163,18 +193,73 @@ public class GridSpawner : MonoBehaviour
         }
     }
 
-    private void FillGrass()
+    private void FillGrass(int offsetX, int offsetY)
     {
-        for (int x = 0; x < width; x++)
+        for (int x = offsetX; x < offsetX + width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = offsetY; y < offsetY + height; y++)
             {
                 Vector3Int cell = new Vector3Int(x, y, 0);
                 if (tilemap.GetTile(cell) == null)
-                {
                     tilemap.SetTile(cell, grassTile);
-                }
             }
         }
+    }
+
+    private void ConnectIsolatedPoints(Vector3Int[,] points)
+{
+    int subCountX = points.GetLength(0);
+    int subCountY = points.GetLength(1);
+
+    for (int y = 0; y < subCountY; y++)
+    {
+        for (int x = 0; x < subCountX; x++)
+        {
+            Vector3Int current = points[x, y];
+            if (current == Vector3Int.zero) continue;
+
+            bool connected = false;
+
+            // перевіряємо, чи хоча б одна сусідня точка є і з'єднана
+            if (y + 1 < subCountY && points[x, y + 1] != Vector3Int.zero) connected = true;
+            if (x + 1 < subCountX && points[x + 1, y] != Vector3Int.zero) connected = true;
+            if (y - 1 >= 0 && points[x, y - 1] != Vector3Int.zero) connected = true;
+            if (x - 1 >= 0 && points[x - 1, y] != Vector3Int.zero) connected = true;
+
+            if (!connected)
+            {
+                // з’єднуємо з **найближчою іншою точкою на мапі**
+                Vector3Int nearest = FindNearestPoint(current, points);
+                if (nearest != Vector3Int.zero)
+                    DrawRoadAxisAligned(current, nearest);
+            }
+        }
+    }
+}
+
+    private Vector3Int FindNearestPoint(Vector3Int point, Vector3Int[,] points)
+    {
+        Vector3Int nearest = Vector3Int.zero;
+        float minDist = float.MaxValue;
+
+        int subCountX = points.GetLength(0);
+        int subCountY = points.GetLength(1);
+
+        for (int y = 0; y < subCountY; y++)
+            {
+                for (int x = 0; x < subCountX; x++)
+                {
+                    Vector3Int other = points[x, y];
+                    if (other == Vector3Int.zero || other == point) continue;
+
+                    float dist = Vector3Int.Distance(point, other);
+                    if (dist < minDist)
+                    {
+                        minDist = dist;
+                        nearest = other;
+                    }
+                }
+            }
+        return nearest; 
     }
 }
