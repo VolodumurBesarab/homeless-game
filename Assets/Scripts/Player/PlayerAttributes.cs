@@ -32,10 +32,10 @@ public class PlayerAttributes : MonoBehaviour
 
     void Start()
     {
-        UpdateStats();
+        UpdateStatsInUA();
     }
 
-    public void UpdateStats()
+    public void UpdateStatsInUI()
     {
         displayedHealth.text = health.ToString();
         displayedAttack.text = attack.ToString();
