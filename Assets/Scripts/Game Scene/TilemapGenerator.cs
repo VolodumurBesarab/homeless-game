@@ -45,15 +45,15 @@ public class GridSpawner : MonoBehaviour
         if (playerCell == Vector3Int.zero) return;
 
         // Генеруємо сусідні чанки навколо гравця
-        Vector2Int playerChunk = GetPlayerChunk(playerCell);
-        for (int dx = -1; dx <= 1; dx++)
-        {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                Vector2Int chunkToSpawn = playerChunk + new Vector2Int(dx, dy);
-                GenerateChunkAt(chunkToSpawn);
-            }
-        }
+        // Vector2Int playerChunk = GetPlayerChunk(playerCell);
+        // for (int dx = -1; dx <= 1; dx++)
+        // {
+        //     for (int dy = -1; dy <= 1; dy++)
+        //     {
+        //         Vector2Int chunkToSpawn = playerChunk + new Vector2Int(dx, dy);
+        //         GenerateChunkAt(chunkToSpawn);
+        //     }
+        // }
     }
 
     private Vector2Int GetPlayerChunk(Vector3Int cell)

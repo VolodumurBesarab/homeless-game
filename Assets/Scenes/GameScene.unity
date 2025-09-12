@@ -268,7 +268,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 928597496}
-  m_Enabled: 0
+  m_Enabled: 1
 --- !u!20 &928597498
 Camera:
   m_ObjectHideFlags: 0
@@ -544,6 +544,7 @@ MonoBehaviour:
   pointTile: {fileID: 11400000, guid: d4e0b8cd33cd4d6458892141a20b1d3b, type: 2}
   roadTile: {fileID: 11400000, guid: d4e0b8cd33cd4d6458892141a20b1d3b, type: 2}
   playerTile: {fileID: 11400000, guid: 6b155fbdc92cd184ca8dc987fe33da4b, type: 2}
+  grassTile: {fileID: 11400000, guid: c71116aaee455a14a9f3f90087dc1862, type: 2}
   width: 64
   height: 64
   subGridWidth: 8
