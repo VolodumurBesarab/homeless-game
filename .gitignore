@@ -7,6 +7,7 @@ Bin/
 .vscode/
 Logs/
 UserSettings/
+*.meta
 *.csproj
 *.sln
 *.user
